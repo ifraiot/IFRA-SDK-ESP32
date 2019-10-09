@@ -40,6 +40,7 @@ private:
   
 
 public:
+    IfraESP32SDK(char* username, char* password, char* server);
     IfraESP32SDK(char* username, char* password);
     bool addAccessPoint(char *ssid, char *pass);
     bool wifiConnection(char *ssid, char *pass);
