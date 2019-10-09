@@ -103,4 +103,6 @@ void IfraESP32SDK::send(char* toptic)
     _recordCount = 0;
 
     serializeJson(_doc, Serial);
+
+    _doc.clear();
 }
