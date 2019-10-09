@@ -2,6 +2,10 @@
 
 DynamicJsonDocument _doc(_capacity);
 
+
+const  long  gmtOffset_sec = 3600;
+const   int   daylightOffset_sec = 3600;
+
 IfraESP32SDK::IfraESP32SDK(char* username, char* password)
 {
     _username = username;
@@ -30,6 +34,12 @@ bool IfraESP32SDK::wifiConnection(char* ssid, char* pass)
     Serial.println(F("WiFi connected"));
     Serial.println(F("IP address: "));
     Serial.println(WiFi.localIP());
+
+ 
+  
+     //init and get the time
+    configTime(gmtOffset_sec, daylightOffset_sec, NTP_SERVER);
+    
 }
 
 bool IfraESP32SDK::mqttConnection(char* mqtt_topic)
@@ -41,7 +51,7 @@ void IfraESP32SDK::setBaseUnit(char* unit)
     _base_unit = unit;
 }
 
-void IfraESP32SDK::setBaseTime(unsigned long time)
+void IfraESP32SDK::setBaseTime(unsigned long int time)
 {
     _base_time = time;
 }
@@ -54,6 +64,10 @@ void IfraESP32SDK::addMeasurement(char* var_id, char* unit, float value)
 {
 
     JsonObject doc = _doc.createNestedObject();
+    if (_base_time != 0 && _recordCount == 0) {
+        doc["bt"] = _base_time;
+    }
+    
     if (_base_name == "") {
         doc["n"] = var_id;
     }
@@ -72,10 +86,16 @@ void IfraESP32SDK::addMeasurement(char* var_id, char* unit, float value)
     _recordCount++;
 }
 
-void IfraESP32SDK::addMeasurement(char* var_id, char* unit, float value, unsigned long time)
+void IfraESP32SDK::addMeasurement(char* var_id, char* unit, float value, double time)
 {
 
     JsonObject doc = _doc.createNestedObject();
+
+    if (_base_time != 0 && _recordCount == 0) {
+        doc["bt"] = _base_time;
+    }else if (_recordCount != 0) {
+        doc["t"] = time;
+    }
 
     if (_base_name == "") {
         doc["n"] = var_id;
@@ -93,7 +113,7 @@ void IfraESP32SDK::addMeasurement(char* var_id, char* unit, float value, unsigne
 
     doc["v"] = value;
 
-    doc["t"] = time;
+   
     _recordCount++;
 }
 
@@ -105,4 +125,17 @@ void IfraESP32SDK::send(char* toptic)
     serializeJson(_doc, Serial);
 
     _doc.clear();
+}
+
+unsigned long int IfraESP32SDK::getTimestamp(void){
+ 
+    struct tm timeinfo;
+    if(!getLocalTime(&timeinfo)){
+        Serial.println("Failed to obtain time");
+        return 0;
+    }
+    //Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+    time_t epochUnix = mktime(&timeinfo);
+    unsigned long int  b = static_cast<time_t>(epochUnix);
+    return b;
 }
