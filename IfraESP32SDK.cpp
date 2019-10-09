@@ -5,15 +5,24 @@ DynamicJsonDocument _doc(_capacity);
 
 const  long  gmtOffset_sec = 3600;
 const   int   daylightOffset_sec = 3600;
+IfraESP32SDK::IfraESP32SDK(char* username, char* password, char* server){
+
+    _username = username;
+    _password = password;
+    _mqtt_client.setClient(_espClient);
+    _mqtt_client.setServer(server, MQTT_PORT);
+    _recordCount = 0;
+    _base_name = "";
+    _base_unit = "";
+}
 
 IfraESP32SDK::IfraESP32SDK(char* username, char* password)
 {
     _username = username;
     _password = password;
-    // _mqtt_client.setClient(_espClient);
-    // _mqtt_client.setServer(IFRASERVER, MQTT_PORT);
+    _mqtt_client.setClient(_espClient);
+    _mqtt_client.setServer(IFRA_SERVER, MQTT_PORT);
     // _mqtt_client.setCallback(callback);
-    // _pack.setBaseName("")
     _recordCount = 0;
     _base_name = "";
     _base_unit = "";
@@ -119,12 +128,27 @@ void IfraESP32SDK::addMeasurement(char* var_id, char* unit, float value, double 
 
 void IfraESP32SDK::send(char* toptic)
 {
-
+    if(!_mqtt_client.connected()) {
+        if (_mqtt_client.connect("ESP8266Client", _username, _password)) {
+            Serial.println("connected");
+        _mqtt_client.subscribe(toptic);
+        } else {
+            Serial.print("failed, rc=");
+            Serial.print(_mqtt_client.state());
+            Serial.println(" try again in 5 seconds");
+            return;
+        }
+         
+   }else{
+       char message[6144];
+       serializeJson(_doc, message);
+       _mqtt_client.publish(toptic, message);
+       Serial.println(message);
+   }
+    _doc.clear();
+    _mqtt_client.loop();
     _recordCount = 0;
 
-    serializeJson(_doc, Serial);
-
-    _doc.clear();
 }
 
 unsigned long int IfraESP32SDK::getTimestamp(void){
