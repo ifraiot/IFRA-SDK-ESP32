@@ -1,5 +1,9 @@
 # IFRA-SDK-ESP32
 
+## Note
+- หากต้องการส่งข้อมูลขนาดมากว่า  128 bytes. ให้แก้ไข MQTT_MAX_PACKET_SIZE ในไฟล์ Arduino/libraries/PubSubClient/src/PubSubClient.h
+
+## ตัวอย่างโค้ด
 ```cpp
 
 //นำเข้า IfraESP32SDK.h สำหรับการเรียกใช้งาน IFRA SDK
