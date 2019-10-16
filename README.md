@@ -1,6 +1,6 @@
 # IFRA-SDK-ESP32
 
-```
+```cpp
 
 //นำเข้า IfraESP32SDK.h สำหรับการเรียกใช้งาน IFRA SDK
 #include <IfraESP32SDK.h>
