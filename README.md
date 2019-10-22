@@ -1,11 +1,20 @@
 # IFRA-SDK-ESP32
 
-```
+## Note
+- หากต้องการส่งข้อมูลขนาดมากว่า  128 bytes. ให้แก้ไข MQTT_MAX_PACKET_SIZE ในไฟล์ Arduino/libraries/PubSubClient/src/PubSubClient.h
+
+## ตัวอย่างโค้ด
+```cpp
+
+//นำเข้า IfraESP32SDK.h สำหรับการเรียกใช้งาน IFRA SDK
 #include <IfraESP32SDK.h>
 
+//Username Password ที่ได้จากการลงทะเบียนในแพลตฟอร์ม https://ws.ifra.io/things
 #define USERNAME "ac361b57-3152-45fd-8bca-7599e2e52d30"
 #define PASSWORD "154d7ede-f938-4369-a45f-c0efa1ef6a90"
 
+
+//ชื่อ SSID และ PASSWORD ของ Access Point
 #define WIFI_SSID "xxxxx"
 #define WIFI_PASSWORD "xxxxx"
 
@@ -26,6 +35,7 @@ double vReal_2[samples];
 double vReal_3[samples];
 double vImag[samples];
 
+//สร้าง Object "device" จาก Class IfraESP32SDK โดยส่ง ค่า USERNAME, PASSWORD เข้า constructor
 IfraESP32SDK device(USERNAME, PASSWORD);
 
 void setup() {
@@ -57,6 +67,7 @@ void setup() {
   z_offset = z_offset / 10;
 
 
+  //ทำการเชื่อมต่อ Access Point โดยการเรียก Method "wifiConnection" จาก Object "device"
   device.wifiConnection(WIFI_SSID, WIFI_PASSWORD);
 
 
@@ -64,7 +75,7 @@ void setup() {
 
 void loop() {
 
-  unsigned long int timestamp = device.getTimestamp();
+  unsigned long int timestamp = device.getTimestamp(); //ดึงเวลาปัจจุปันจาก Server
   Serial.println(timestamp);
   microseconds = micros();
   unsigned int i = 0;
@@ -98,6 +109,8 @@ void loop() {
 
   }
 
+
+  //Set BaseName setBaseUnit setBaseTime  ให้กับ Record แรก เพื่อลดขนาด message Refer:https://tools.ietf.org/html/rfc8428
   device.setBaseName("Axis_X_Amplitude");
   device.setBaseUnit("A");
   device.setBaseTime(timestamp);
@@ -117,17 +130,22 @@ void loop() {
 
     while (i < sub_part + n * sub_part)
     {
+    
+      //Add ค่าการวัดประกอบด้วย Measurement Name , Unit ,Value ,Time(sec)
       device.addMeasurement("Axis_X_Amplitude", "A", vReal_1[i], ts * 167e-6);
       i++;
       ts++;
     }
 
+
+    //เรียก Method send เพื่อทำการส่งข้อมูลที่ได้เพิ่มเข้าไปก่อนหน้า
+    //โดยจะส่งเข้าไปใน Topic ที่แพลตฟอร์มกำหนดให้
+    //หลังจากส่งสำเร็จ SDK จะล้างข้อมูล Measurementทั้งหมดและพร้อมสำหรับข้อมูลชุดใหม่
     device.send("organization/2/messages");
 
     n++;
   }
 
-  device.getTimestamp();
 
   delay(5000);
 
