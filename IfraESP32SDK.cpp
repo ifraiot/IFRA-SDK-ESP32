@@ -126,7 +126,7 @@ void IfraESP32SDK::addMeasurement(char* var_id, char* unit, float value, double 
 void IfraESP32SDK::send(char* toptic)
 {
     if (!_mqtt_client.connected()) {
-        if (_mqtt_client.connect("ESP8266Client", _username, _password)) {
+        if (_mqtt_client.connect(_username, _username, _password)) {
             Serial.println("connected");
             _mqtt_client.subscribe(toptic);
         }
@@ -138,10 +138,10 @@ void IfraESP32SDK::send(char* toptic)
         }
     }
     else {
-        char message[6144];
+        char message[4096];
         serializeJson(_doc, message);
         _mqtt_client.publish(toptic, message);
-        Serial.println(message);
+        //Serial.println(message);
     }
     _doc.clear();
     _mqtt_client.loop();
