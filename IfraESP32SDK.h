@@ -37,6 +37,7 @@ private:
     char* _base_name;
     char* _base_unit;
     unsigned long int _base_time;
+    void callback(char *topic, byte*payload, unsigned int length);
   
 
 public:
@@ -52,4 +53,9 @@ public:
     void setBaseName(char *name);
     void send(char *topic);
     unsigned long int getTimestamp(void);
+    bool connected(void);
+    void reconnect(void);
+ 
 };
+
+
