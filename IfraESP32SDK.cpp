@@ -55,7 +55,25 @@ void IfraESP32SDK::startDownloadCallback(void) {
 }
 
 void IfraESP32SDK::endDownloadCallback(void) {
-        Serial.println("endDownloadCallback");
+        Serial.println("Update Device Status");
+     if ((WiFi.status() == WL_CONNECTED)) { 
+        HTTPClient http;
+        http.begin(_callback_success); 
+        int httpCode = http.GET();                                       
+        if (httpCode > 0) { //Check for the returning code
+            String payload = http.getString();
+            Serial.println(httpCode);
+            Serial.println(payload);
+        }
+    
+        else {
+        Serial.println("Error on HTTP request");
+        }
+    
+        http.end(); //Free the resources
+    }
+    
+    delay(10000);
 }
 void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
 
@@ -64,6 +82,7 @@ void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
                 _ota_device_id = _docMQTT["device_id"];
                 _ota_url = _docMQTT["url"];
                 _ota_token = _docMQTT["token"];
+                _callback_success = _docMQTT["callback_success"];
                 _state = Fota_e;
                 Serial.println("Fota_e");
 

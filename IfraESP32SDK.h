@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <ESP32OTA.h>
 #include <string> 
-
+#include <HTTPClient.h>
 #ifndef MAX_RECORD
 #define MAX_RECORD 2048
 #endif
@@ -52,6 +52,7 @@ private:
     const  char* _ota_device_id ;
     const  char* _ota_url ;
     const  char* _ota_token  ;
+    const  char* _callback_success;
 
 public:
     IfraESP32SDK(char* username, char* password, char* server);
