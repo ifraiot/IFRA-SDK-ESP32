@@ -34,10 +34,15 @@ void otaErrorCallback(char * message) {
 
  
 void IfraESP32SDK::otaProgressCallback(DlState state, int percent) {
-    char buffer_percent [50];
+ 
+    String topic = "PROGRESS/OTA/";
+    String client_id(_username);
+    String full_topic = topic+client_id;
+
+    char buffer_percent[50];
     sprintf (buffer_percent, "%d", percent);
     if (_mqtt_client.connected()) {
-          _mqtt_client.publish("/PROGRESS/OTA/"+_username, buffer_percent);
+          _mqtt_client.publish(full_topic.c_str(), buffer_percent);
           _mqtt_client.loop();
     }
     Serial.printf("state = %d - percent = %d\n", state, percent);
@@ -215,7 +220,10 @@ void IfraESP32SDK::reconnect(void) {
                 // Attempt to connect
                 if (_mqtt_client.connect(_username, _username, _password)) {
                         Serial.println("connected");
-                        _mqtt_client.subscribe("OTA/3");
+                         String topic = "OTA/";
+                         String client_id(_username);
+                         String full_topic = topic+client_id;
+                        _mqtt_client.subscribe(full_topic.c_str());
 
                 } else {
                         Serial.print("failed, rc=");
