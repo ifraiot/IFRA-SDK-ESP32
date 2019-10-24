@@ -5,6 +5,9 @@
 #include <kpn_senml.h>
 #include "time.h"
 #include <stdio.h>
+#include <ESP32OTA.h>
+#include <string> 
+
 #ifndef MAX_RECORD
 #define MAX_RECORD 2048
 #endif
@@ -23,7 +26,10 @@
  
  
 const size_t _capacity = JSON_ARRAY_SIZE(500) + JSON_OBJECT_SIZE(10);
-
+typedef enum {
+  Runnning_e = 0x01,
+  Fota_e
+} SysState;
 
 class IfraESP32SDK
 {
@@ -38,7 +44,14 @@ private:
     char* _base_unit;
     unsigned long int _base_time;
     void callback(char *topic, byte*payload, unsigned int length);
-  
+    void otaErrorCallback(char *message);
+    void otaProgressCallback(DlState state, int percent);
+    void startDownloadCallback(void);
+    void endDownloadCallback(void);
+    SysState _state;
+    const  char* _ota_device_id ;
+    const  char* _ota_url ;
+    const  char* _ota_token  ;
 
 public:
     IfraESP32SDK(char* username, char* password, char* server);
@@ -55,7 +68,7 @@ public:
     unsigned long int getTimestamp(void);
     bool connected(void);
     void reconnect(void);
- 
+    void loop(void);
 };
 
 
