@@ -32,23 +32,22 @@ void otaErrorCallback(char * message) {
         Serial.println(message);
 }
 
- 
 void IfraESP32SDK::otaProgressCallback(DlState state, int percent) {
- 
-    String topic = "PROGRESS/OTA/";
-    String client_id(_username);
-    String full_topic = topic+client_id;
 
-    char buffer_percent[50];
-    sprintf (buffer_percent, "%d", percent);
-    if (_mqtt_client.connected()) {
-          _mqtt_client.publish(full_topic.c_str(), buffer_percent);
-          _mqtt_client.loop();
-    }
-    Serial.printf("state = %d - percent = %d\n", state, percent);
+        String topic = "PROGRESS/OTA/";
+        String client_id(_username);
+        String full_topic = topic + client_id;
+
+        char buffer_percent[50];
+        sprintf(buffer_percent, "%d", percent);
+        if (_mqtt_client.connected()) {
+                _mqtt_client.publish(full_topic.c_str(), buffer_percent);
+                _mqtt_client.loop();
+        }
+        Serial.printf("state = %d - percent = %d\n", state, percent);
 }
-void IfraESP32SDK::otaErrorCallback(char *message){
-     Serial.println(message);
+void IfraESP32SDK::otaErrorCallback(char * message) {
+        Serial.println(message);
 }
 void IfraESP32SDK::startDownloadCallback(void) {
         Serial.println("startDownloadCallback");
@@ -56,24 +55,22 @@ void IfraESP32SDK::startDownloadCallback(void) {
 
 void IfraESP32SDK::endDownloadCallback(void) {
         Serial.println("Update Device Status");
-     if ((WiFi.status() == WL_CONNECTED)) { 
-        HTTPClient http;
-        http.begin(_callback_success); 
-        int httpCode = http.GET();                                       
-        if (httpCode > 0) { //Check for the returning code
-            String payload = http.getString();
-            Serial.println(httpCode);
-            Serial.println(payload);
+        if ((WiFi.status() == WL_CONNECTED)) {
+                HTTPClient http;
+                http.begin(_callback_success);
+                int httpCode = http.GET();
+                if (httpCode > 0) { //Check for the returning code
+                        String payload = http.getString();
+                        Serial.println(httpCode);
+                        Serial.println(payload);
+                } else {
+                        Serial.println("Error on HTTP request");
+                }
+
+                http.end(); //Free the resources
         }
-    
-        else {
-        Serial.println("Error on HTTP request");
-        }
-    
-        http.end(); //Free the resources
-    }
-    
-    delay(10000);
+
+        delay(1000);
 }
 void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
 
@@ -93,16 +90,16 @@ void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
                         info.caCert = NULL;
                         info.token = (char * ) _ota_token;
                         info.startDownloadCallback = [this](void) {
-                            startDownloadCallback();
+                                startDownloadCallback();
                         };
-                         info.endDownloadCallback =[this](void) {
-                            endDownloadCallback();
+                        info.endDownloadCallback = [this](void) {
+                                endDownloadCallback();
                         };
-                         info.progressCallback = [this](DlState state, int percent) {
-                            otaProgressCallback( state,   percent);
+                        info.progressCallback = [this](DlState state, int percent) {
+                                otaProgressCallback(state, percent);
                         };
-                         info.errorCallback = [this](char *message) {
-                            otaErrorCallback(message);
+                        info.errorCallback = [this](char * message) {
+                                otaErrorCallback(message);
                         };
                         Serial.print("Download from:");
                         Serial.println(_ota_url);
@@ -233,15 +230,14 @@ void IfraESP32SDK::loop(void) {
 
 void IfraESP32SDK::reconnect(void) {
 
-        // Loop until we're reconnected
         while (!_mqtt_client.connected()) {
-                Serial.print("Attempting MQTT connection...");
-                // Attempt to connect
+                Serial.print("Connecting IFRA MQTT...");
+
                 if (_mqtt_client.connect(_username, _username, _password)) {
-                        Serial.println("connected");
-                         String topic = "OTA/";
-                         String client_id(_username);
-                         String full_topic = topic+client_id;
+                        Serial.println("connected ^_^");
+                        String topic = "OTA/";
+                        String client_id(_username);
+                        String full_topic = topic + client_id;
                         _mqtt_client.subscribe(full_topic.c_str());
 
                 } else {
