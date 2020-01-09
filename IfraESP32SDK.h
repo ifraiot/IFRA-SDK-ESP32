@@ -23,6 +23,27 @@
 #ifndef MQTT_PORT
 #define MQTT_PORT 1883
 #endif
+
+
+
+//WiFi Auto Connect
+
+// #if defined(ESP8266)
+// #include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+// #else
+// #include <WiFi.h>          //https://github.com/esp8266/Arduino
+// #endif
+
+//needed for library
+#include <DNSServer.h>
+#if defined(ESP8266)
+#include <ESP8266WebServer.h>
+#else
+#include <WebServer.h>
+#endif
+#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
+
+
  
  
 const size_t _capacity = JSON_ARRAY_SIZE(500) + JSON_OBJECT_SIZE(10);
@@ -39,6 +60,7 @@ private:
     WiFiClient _espClient;
     PubSubClient _mqtt_client;
     WiFiMulti _wifiMulti;
+    WiFiManager wifiManager;
     int _recordCount;
     char* _base_name;
     char* _base_unit;
@@ -57,7 +79,9 @@ private:
 public:
     IfraESP32SDK(char* username, char* password, char* server);
     IfraESP32SDK(char* username, char* password);
+    IfraESP32SDK();
     bool addAccessPoint(char *ssid, char *pass);
+    bool wifiConnection();
     bool wifiConnection(char *ssid, char *pass);
     bool mqttConnection(char *mqtt_topic);
     void addMeasurement(char *var_id, char *unit,float value);

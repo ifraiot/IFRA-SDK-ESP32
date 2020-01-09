@@ -4,7 +4,9 @@ DynamicJsonDocument _doc(_capacity);
 DynamicJsonDocument _docMQTT(1024);
 const long gmtOffset_sec = 3600;
 const int daylightOffset_sec = 3600;
-
+IfraESP32SDK::IfraESP32SDK(){
+        
+}
 IfraESP32SDK::IfraESP32SDK(char * username, char * password, char * server) {
         _state = Runnning_e;
         _username = username;
@@ -73,7 +75,16 @@ void IfraESP32SDK::endDownloadCallback(void) {
         delay(1000);
 }
 void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
+        if (strncmp("WIFI-RESET", topic, 3) == 0) {
+                deserializeJson(_docMQTT, (char * ) payload);
+                _ota_device_id = _docMQTT["device_id"];
+                if ((String) _ota_device_id == (String) _username) {
+                  WiFi.disconnect(false,true);
+                  delay(2000);
+                  ESP.restart();
+                }
 
+        }
         if (strncmp("OTA", topic, 3) == 0) {
                 deserializeJson(_docMQTT, (char * ) payload);
                 _ota_device_id = _docMQTT["device_id"];
@@ -109,7 +120,16 @@ void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
         }
 
 }
+bool IfraESP32SDK::wifiConnection() {
+        wifiManager.autoConnect("VIBRO");
+          //init and get the time
+        configTime(gmtOffset_sec, daylightOffset_sec, NTP_SERVER);
 
+        //MQTT callback
+        _mqtt_client.setCallback([this](char * topic, byte * payload, unsigned int length) {
+                callback(topic, payload, length);
+        });
+}
 bool IfraESP32SDK::wifiConnection(char * ssid, char * pass) {
         WiFi.begin(ssid, pass);
         Serial.print("Start connect wifi");
