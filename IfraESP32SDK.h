@@ -75,6 +75,8 @@ private:
     const  char* _ota_url ;
     const  char* _ota_token  ;
     const  char* _callback_success;
+    const  char* _is_wifi_reset;
+    
 
 public:
     IfraESP32SDK(char* username, char* password, char* server);
