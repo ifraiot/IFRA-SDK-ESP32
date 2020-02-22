@@ -7,6 +7,18 @@ const int daylightOffset_sec = 3600;
 IfraESP32SDK::IfraESP32SDK(){
         
 }
+
+IfraESP32SDK::IfraESP32SDK(char* organization_id, char * username, char * password, char * server) {
+        _state = Runnning_e;
+        _organization_id = organization_id;
+        _username = username;
+        _password = password;
+        _mqtt_client.setClient(_espClient);
+        _mqtt_client.setServer(server, MQTT_PORT);
+        _recordCount = 0;
+        _base_name = "";
+        _base_unit = "";
+}
 IfraESP32SDK::IfraESP32SDK(char * username, char * password, char * server) {
         _state = Runnning_e;
         _username = username;
@@ -130,12 +142,13 @@ void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
 bool IfraESP32SDK::wifiConnection() {
         String ssid = "VIBRO-" + String(_username);
         if(!wifiManager.autoConnect(ssid.c_str())){
-          Serial.println("failed to connect, we should reset as see if it connects");
+        Serial.println("failed to connect, we should reset as see if it connects");
         delay(3000);
         ESP.restart();
         delay(5000);
         }
-          //init and get the time
+        
+        //init and get the time
         configTime(gmtOffset_sec, daylightOffset_sec, NTP_SERVER);
 
         //MQTT callback
@@ -272,6 +285,8 @@ void IfraESP32SDK::reconnect(void) {
                         String client_id(_username);
                         String full_topic = topic + client_id;
                         _mqtt_client.subscribe(full_topic.c_str());
+                        String actuator_topic = "organization/"+String(_organization_id)+"/messages";
+                        _mqtt_client.subscribe(actuator_topic.c_str());
 
                 } else {
                         Serial.print("failed, rc=");
@@ -284,3 +299,8 @@ void IfraESP32SDK::reconnect(void) {
         }
 
 }
+void IfraESP32SDK::setActuator(char * measurement, void (*callbackFunc)(char * topic, byte * payload, unsigned int length)) {
+   _mqtt_client.setCallback(callbackFunc);
+        
+}
+ 

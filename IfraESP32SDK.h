@@ -55,6 +55,7 @@ typedef enum {
 class IfraESP32SDK
 {
 private:
+    char* _organization_id;
     char* _username;
     char* _password;
     WiFiClient _espClient;
@@ -79,6 +80,7 @@ private:
     
 
 public:
+    IfraESP32SDK(char* organization_id, char* username, char* password, char* server);
     IfraESP32SDK(char* username, char* password, char* server);
     IfraESP32SDK(char* username, char* password);
     IfraESP32SDK();
@@ -96,6 +98,7 @@ public:
     bool connected(void);
     void reconnect(void);
     void loop(void);
+    void setActuator(char * measurement, void (*callbackFunc)(char * topic, byte * payload, unsigned int length));
 };
 
 
