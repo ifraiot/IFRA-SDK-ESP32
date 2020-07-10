@@ -144,6 +144,9 @@ bool IfraESP32SDK::wifiConnection() {
         });
 }
 bool IfraESP32SDK::wifiConnection(char * ssid, char * pass) {
+        Serial.print("In func wificon");
+        _ssid = ssid;
+        _pass = pass;
         WiFi.begin(ssid, pass);
         Serial.print("Start connect wifi");
         while (WiFi.status() != WL_CONNECTED) {
@@ -234,7 +237,7 @@ void IfraESP32SDK::send(char * toptic) {
                 serializeJson(_doc, message);
                 _mqtt_client.publish(toptic, message);
                 _mqtt_client.loop();
-                //Serial.println(message);
+                Serial.println(message);
         }
 
         _doc.clear();
@@ -262,10 +265,8 @@ void IfraESP32SDK::loop(void) {
 }
 
 void IfraESP32SDK::reconnect(void) {
-
         while (!_mqtt_client.connected()) {
                 Serial.print("Connecting IFRA MQTT...");
-
                 if (_mqtt_client.connect(_username, _username, _password)) {
                         Serial.println("connected ^_^");
                         String topic = "OTA/";
@@ -283,4 +284,15 @@ void IfraESP32SDK::reconnect(void) {
                 }
         }
 
+}
+
+bool IfraESP32SDK::wifiReconnect(void) {
+        if (WiFi.disconnect()){
+        WiFi.begin(_ssid, _pass);
+        Serial.print("Start reconnect wifi");
+        while (WiFi.status() != WL_CONNECTED) {
+                delay(500);
+                Serial.print(".");
+         }
+        }        
 }

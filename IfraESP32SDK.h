@@ -57,6 +57,8 @@ class IfraESP32SDK
 private:
     char* _username;
     char* _password;
+    char* _ssid;
+    char* _pass;
     WiFiClient _espClient;
     PubSubClient _mqtt_client;
     WiFiMulti _wifiMulti;
@@ -96,6 +98,7 @@ public:
     bool connected(void);
     void reconnect(void);
     void loop(void);
+    bool wifiReconnect(void);
 };
 
 
