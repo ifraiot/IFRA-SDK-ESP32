@@ -4,7 +4,21 @@ DynamicJsonDocument _doc(_capacity);
 DynamicJsonDocument _docMQTT(1024);
 const long gmtOffset_sec = 3600;
 const int daylightOffset_sec = 3600;
+IfraESP32SDK::IfraESP32SDK(){
+        
+}
 
+IfraESP32SDK::IfraESP32SDK(char* organization_id, char * username, char * password, char * server) {
+        _state = Runnning_e;
+        _organization_id = organization_id;
+        _username = username;
+        _password = password;
+        _mqtt_client.setClient(_espClient);
+        _mqtt_client.setServer(server, MQTT_PORT);
+        _recordCount = 0;
+        _base_name = "";
+        _base_unit = "";
+}
 IfraESP32SDK::IfraESP32SDK(char * username, char * password, char * server) {
         _state = Runnning_e;
         _username = username;
@@ -73,15 +87,25 @@ void IfraESP32SDK::endDownloadCallback(void) {
         delay(1000);
 }
 void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
-
+        
         if (strncmp("OTA", topic, 3) == 0) {
                 deserializeJson(_docMQTT, (char * ) payload);
                 _ota_device_id = _docMQTT["device_id"];
                 _ota_url = _docMQTT["url"];
                 _ota_token = _docMQTT["token"];
                 _callback_success = _docMQTT["callback_success"];
-                _state = Fota_e;
-                Serial.println("Fota_e");
+                _is_wifi_reset = _docMQTT["is_wifi_reset"];
+
+                if((String) _is_wifi_reset!= ""){
+                           if ((String) _ota_device_id == (String) _username) {
+                                Serial.println("Reset WiFi");
+                                WiFi.disconnect(false,true);
+                                delay(2000);
+                                ESP.restart();
+                           }
+                }else{
+                        _state = Fota_e;
+                        Serial.println("Fota_e");
 
                 if ((String) _ota_device_id == (String) _username) {
                         Serial.println("Start Download Firmware!!");
@@ -106,11 +130,36 @@ void IfraESP32SDK::callback(char * topic, byte * payload, unsigned int length) {
                         esp32OTA.start(info);
 
                 }
+
+                }
+
+
+
+
         }
 
 }
+bool IfraESP32SDK::wifiConnection() {
+        String ssid = "VIBRO-" + String(_username);
+        if(!wifiManager.autoConnect(ssid.c_str())){
+        Serial.println("failed to connect, we should reset as see if it connects");
+        delay(3000);
+        ESP.restart();
+        delay(5000);
+        }
+        
+        //init and get the time
+        configTime(gmtOffset_sec, daylightOffset_sec, NTP_SERVER);
 
+        //MQTT callback
+        _mqtt_client.setCallback([this](char * topic, byte * payload, unsigned int length) {
+                callback(topic, payload, length);
+        });
+}
 bool IfraESP32SDK::wifiConnection(char * ssid, char * pass) {
+        Serial.print("In func wificon");
+        _ssid = ssid;
+        _pass = pass;
         WiFi.begin(ssid, pass);
         Serial.print("Start connect wifi");
         while (WiFi.status() != WL_CONNECTED) {
@@ -201,7 +250,7 @@ void IfraESP32SDK::send(char * toptic) {
                 serializeJson(_doc, message);
                 _mqtt_client.publish(toptic, message);
                 _mqtt_client.loop();
-                //Serial.println(message);
+                Serial.println(message);
         }
 
         _doc.clear();
@@ -229,16 +278,16 @@ void IfraESP32SDK::loop(void) {
 }
 
 void IfraESP32SDK::reconnect(void) {
-
         while (!_mqtt_client.connected()) {
                 Serial.print("Connecting IFRA MQTT...");
-
                 if (_mqtt_client.connect(_username, _username, _password)) {
                         Serial.println("connected ^_^");
                         String topic = "OTA/";
                         String client_id(_username);
                         String full_topic = topic + client_id;
                         _mqtt_client.subscribe(full_topic.c_str());
+                        String actuator_topic = "organization/"+String(_organization_id)+"/messages";
+                        _mqtt_client.subscribe(actuator_topic.c_str());
 
                 } else {
                         Serial.print("failed, rc=");
@@ -251,3 +300,19 @@ void IfraESP32SDK::reconnect(void) {
         }
 
 }
+
+bool IfraESP32SDK::wifiReconnect(void) {
+        if (WiFi.disconnect()){
+        WiFi.begin(_ssid, _pass);
+        Serial.print("Start reconnect wifi");
+        while (WiFi.status() != WL_CONNECTED) {
+                delay(500);
+                Serial.print(".");
+         }
+        }        
+}
+void IfraESP32SDK::setActuator(char * measurement, void (*callbackFunc)(char * topic, byte * payload, unsigned int length)) {
+   _mqtt_client.setCallback(callbackFunc);
+        
+}
+ 

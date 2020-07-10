@@ -23,6 +23,27 @@
 #ifndef MQTT_PORT
 #define MQTT_PORT 1883
 #endif
+
+
+
+//WiFi Auto Connect
+
+// #if defined(ESP8266)
+// #include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+// #else
+// #include <WiFi.h>          //https://github.com/esp8266/Arduino
+// #endif
+
+//needed for library
+#include <DNSServer.h>
+#if defined(ESP8266)
+#include <ESP8266WebServer.h>
+#else
+#include <WebServer.h>
+#endif
+#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
+
+
  
  
 const size_t _capacity = JSON_ARRAY_SIZE(500) + JSON_OBJECT_SIZE(10);
@@ -34,11 +55,15 @@ typedef enum {
 class IfraESP32SDK
 {
 private:
+    char* _organization_id;
     char* _username;
     char* _password;
+    char* _ssid;
+    char* _pass;
     WiFiClient _espClient;
     PubSubClient _mqtt_client;
     WiFiMulti _wifiMulti;
+    WiFiManager wifiManager;
     int _recordCount;
     char* _base_name;
     char* _base_unit;
@@ -53,11 +78,16 @@ private:
     const  char* _ota_url ;
     const  char* _ota_token  ;
     const  char* _callback_success;
+    const  char* _is_wifi_reset;
+    
 
 public:
+    IfraESP32SDK(char* organization_id, char* username, char* password, char* server);
     IfraESP32SDK(char* username, char* password, char* server);
     IfraESP32SDK(char* username, char* password);
+    IfraESP32SDK();
     bool addAccessPoint(char *ssid, char *pass);
+    bool wifiConnection();
     bool wifiConnection(char *ssid, char *pass);
     bool mqttConnection(char *mqtt_topic);
     void addMeasurement(char *var_id, char *unit,float value);
@@ -70,6 +100,8 @@ public:
     bool connected(void);
     void reconnect(void);
     void loop(void);
+    bool wifiReconnect(void);
+    void setActuator(char * measurement, void (*callbackFunc)(char * topic, byte * payload, unsigned int length));
 };
 
 
